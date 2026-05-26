@@ -188,7 +188,7 @@ If you use CRONOS-Benchmark in your research, please cite:
 ```bibtex
 @misc{begiristain2026cronos,
       title={CRONOS: Benchmarking Counterfactual Physical Consistency in Video Models}, 
-      author={León Begiristain and Olaf Dünkel and Adam Kortylewski},
+      author={Le{\'o}n Begiristain and Olaf D{\"u}nkel and Adam Kortylewski},
       year={2026},
       eprint={2605.23699},
       archivePrefix={arXiv},

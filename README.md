@@ -1,6 +1,6 @@
 # CRONOS: Benchmarking Counterfactual Physical Consistency in Video Models
 
-[![Paper](https://img.shields.io/badge/Paper-arXiv-red)](PAPER_URL)
+[![Paper](https://img.shields.io/badge/Paper-arXiv-red)](https://arxiv.org/abs/2605.23699)
 [![Project Page](https://img.shields.io/badge/Project-Page-blue)](https://genintel.github.io/CRONOS/)
 [![Dataset](https://img.shields.io/badge/Dataset-HuggingFace-yellow)](https://huggingface.co/datasets/genintel/CRONOS-benchmark)
 [![Code](https://img.shields.io/badge/Code-GitHub-black)](https://github.com/GenIntel/CRONOS-benchmark)
@@ -187,11 +187,12 @@ If you use CRONOS-Benchmark in your research, please cite:
 
 ```bibtex
 @misc{begiristain2026cronos,
-  title         = {{CRONOS}: Benchmarking Counterfactual Physical Consistency in Video Models},
-  author        = {Begiristain, Le{\'o}n and D{\"u}nkel, Olaf and Kortylewski, Adam},
-  year          = {2026},
-  eprint        = {XXXX.XXXXX},
-  archivePrefix = {arXiv},
-  primaryClass  = {cs.CV}
+      title={CRONOS: Benchmarking Counterfactual Physical Consistency in Video Models}, 
+      author={León Begiristain and Olaf Dünkel and Adam Kortylewski},
+      year={2026},
+      eprint={2605.23699},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2605.23699}, 
 }
 ```

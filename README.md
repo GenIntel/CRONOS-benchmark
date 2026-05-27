@@ -181,6 +181,18 @@ python metrics/metrics.py \
 
 Raw values, linearly- or exponentially-scaled values, and the `success` flag are all written to the output JSON.
 
+## Acknowledgments
+
+CRONOS builds on the following models and codebases:
+
+- **[SAM3](https://github.com/facebookresearch/sam3)** — Ravi et al., *SAM 2: Segment Anything in Images and Videos*, Meta AI Research.
+- **[SAM3D-Objects](https://github.com/facebookresearch/sam-3d-objects)** — El Banani et al., *SAM3D: Zero-Shot 3D Object Understanding with Vision Foundation Models*, Meta AI Research.
+- **[CoTracker3](https://github.com/facebookresearch/co-tracker)** — Karaev et al., *CoTracker3: Simpler and Better Point Tracking by Pseudo-Labelling Real Videos*, Meta AI Research.
+- **[DisMo](https://github.com/CompVis/DisMo)** — Rühling Cachay et al., *DisMo: Disentangled Motion Representations*, CompVis.
+- **[DINOv2](https://github.com/facebookresearch/dinov2)** — Oquab et al., *DINOv2: Learning Robust Visual Features without Supervision*, Meta AI Research.
+- **[Qwen3-VL](https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct)** — Qwen Team, *Qwen3-VL*, Alibaba Cloud.
+- **[CLIP](https://github.com/openai/CLIP)** — Radford et al., *Learning Transferable Visual Models From Natural Language Supervision*, OpenAI.
+
 ## Citation
 
 If you use CRONOS-Benchmark in your research, please cite:

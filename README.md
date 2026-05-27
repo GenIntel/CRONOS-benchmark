@@ -193,6 +193,10 @@ CRONOS builds on the following models and codebases:
 - **[Qwen3-VL](https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct)** — Qwen Team, *Qwen3-VL*, Alibaba Cloud.
 - **[CLIP](https://github.com/openai/CLIP)** — Radford et al., *Learning Transferable Visual Models From Natural Language Supervision*, OpenAI.
 
+## License
+
+The benchmark code in this repository is released under the [MIT License](LICENSE). Third-party models used by CRONOS (SAM3, CoTracker3, DisMo, DINOv2, Qwen3-VL, CLIP) are subject to their own licenses — please review them before use.
+
 ## Citation
 
 If you use CRONOS-Benchmark in your research, please cite:

@@ -51,7 +51,7 @@ def _get_questions(event, scene, obj):
         "Is the camera view fixed throughout the video?",
         "Is the background static throughout the video?",
         f"Does the {name} maintain its color and shape throughout the video?",
-        "Do new objects appear on the scene during the video?"
+        "Do new objects appear on the scene during the video?",
         "Do objects move smoothly without sudden jumps or teleportation during the video?",
         "Do objects move without forces acting on them?",
     ]
@@ -102,7 +102,11 @@ def _get_questions(event, scene, obj):
     else:
         raise ValueError(f"Unknown event: {event}")
 
-    return general_q + exp_q, {**general_pos, **exp_pos}
+    questions, outcomes = general_q + exp_q, {**general_pos, **exp_pos}
+    # Questions are zipped against the outcome keys, so a length mismatch silently
+    # pairs every later key with the wrong question.
+    assert len(questions) == len(outcomes), (len(questions), len(outcomes))
+    return questions, outcomes
 
 
 def _build_prompt(questions, positive_outcomes, event, scene, obj):

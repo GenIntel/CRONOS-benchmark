@@ -2,12 +2,14 @@
 # Run all predictions in order for a single video against a reference sequence.
 #
 # Usage:
-#   run_predictions.sh --video VIDEO --ref REF_DIR --output OUTPUT_DIR
+#   run_predictions.sh --video VIDEO --ref REF_DIR --output OUTPUT_DIR [--ref_alternatives ALT_DIR]
 #
 # Arguments:
 #   --video   Generated/input .mp4 file to evaluate
 #   --ref     Reference dataset directory containing metadata.json, mask/, and movies/
 #   --output  Directory where all predictions are stored
+#   --ref_alternatives  Optional directory of alternative reference .mp4 files;
+#             motion similarity is computed against each and the best is kept
 #
 # Output files in OUTPUT_DIR:
 #   segmentation_masks.npz      (run_sam)
@@ -16,6 +18,7 @@
 #   dino_embeddings.npz         (run_dino)
 #   dismo_embeddings.npz        (run_dismo, generated video)
 #   gt_dismo_embeddings.npz     (run_dismo, reference frames)
+#   gt_dismo_embeddings/*.npz   (run_dismo, one per alternative; only with --ref_alternatives)
 #   vlm_predictions.json        (run_qwen)
 
 set -euo pipefail
@@ -28,12 +31,14 @@ REPO="$(dirname "$SCRIPTS")"
 VIDEO=""
 REF_DIR=""
 OUTPUT=""
+ALT_DIR=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --video)   VIDEO="$2";   shift 2 ;;
         --ref)     REF_DIR="$2"; shift 2 ;;
         --output)  OUTPUT="$2";  shift 2 ;;
+        --ref_alternatives) ALT_DIR="$2"; shift 2 ;;
         *) echo "Unknown argument: $1" >&2; exit 1 ;;
     esac
 done
@@ -59,6 +64,16 @@ if [[ ! -f "$REF_VIDEO" ]]; then
     echo "Error: reference video not found at $REF_VIDEO" >&2; exit 1
 fi
 
+ALT_VIDEOS=()
+if [[ -n "$ALT_DIR" ]]; then
+    shopt -s nullglob
+    ALT_VIDEOS=("$ALT_DIR"/*.mp4)
+    shopt -u nullglob
+    if [[ ${#ALT_VIDEOS[@]} -eq 0 ]]; then
+        echo "Error: no .mp4 files found in $ALT_DIR" >&2; exit 1
+    fi
+fi
+
 mkdir -p "$OUTPUT"
 MASKS="$OUTPUT/segmentation_masks.npz"
 
@@ -81,15 +96,30 @@ python "$SCRIPTS/run_dino.py" \
     --mask   "$MASKS" \
     --output "$OUTPUT/dino_embeddings.npz"
 
+# All DisMo inputs are resampled to the lowest fps among them so the
+# lookahead window covers the same duration in every video.
+DISMO_ALIGN=("$VIDEO" "$REF_VIDEO" ${ALT_VIDEOS[@]+"${ALT_VIDEOS[@]}"})
+
 echo "[4/7] DisMo embeddings (generated)"
 python "$SCRIPTS/run_dismo.py" \
-    --video  "$VIDEO" \
-    --output "$OUTPUT/dismo_embeddings.npz"
+    --video    "$VIDEO" \
+    --output   "$OUTPUT/dismo_embeddings.npz" \
+    --align_to "${DISMO_ALIGN[@]}"
 
 echo "[5/7] DisMo embeddings (reference)"
 python "$SCRIPTS/run_dismo.py" \
-    --video  "$REF_DIR/movies/complete.mp4" \
-    --output "$OUTPUT/gt_dismo_embeddings.npz"
+    --video    "$REF_VIDEO" \
+    --output   "$OUTPUT/gt_dismo_embeddings.npz" \
+    --align_to "${DISMO_ALIGN[@]}"
+
+# Clear alternatives from previous runs so metrics.py never picks up stale ones.
+rm -rf "$OUTPUT/gt_dismo_embeddings"
+for ALT in ${ALT_VIDEOS[@]+"${ALT_VIDEOS[@]}"}; do
+    python "$SCRIPTS/run_dismo.py" \
+        --video    "$ALT" \
+        --output   "$OUTPUT/gt_dismo_embeddings/$(basename "${ALT%.*}").npz" \
+        --align_to "${DISMO_ALIGN[@]}"
+done
 
 echo "[6/7] Qwen VLM evaluation"
 python "$SCRIPTS/run_qwen.py" \

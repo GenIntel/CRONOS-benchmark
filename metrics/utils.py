@@ -69,8 +69,10 @@ def load_dino_embeddings(path):
 
 
 def load_dismo_embeddings(path):
-    """Load dismo_embeddings.npz. Returns (T, D) float array."""
-    return np.load(path)["embeddings"].astype(float)
+    """Load dismo_embeddings.npz. Returns ((T, D) float array, fps or None)."""
+    npz = np.load(path)
+    fps = float(npz["fps"]) if "fps" in npz else None
+    return npz["embeddings"].astype(float), fps
 
 
 def load_vlm_predictions(path):

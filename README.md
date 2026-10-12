@@ -139,6 +139,9 @@ PYTHON_SAM3D=/path/to/envs/cronos-sam3d/bin/python bash scripts/run_predictions.
 - `--video`: the generated `.mp4` file to evaluate
 - `--ref`: a sequence directory from the CRONOS-Benchmark dataset; must contain `metadata.json`, `mask/frame_0000.jpg`, and `movies/complete.mp4`
 - `--output`: directory where all prediction artefacts are written
+- `--ref_alternatives` *(optional)*: directory of alternative reference `.mp4` files. DisMo embeddings are extracted for each one and `motion_similarity` is computed against all of them, keeping the best match
+
+All videos passed to DisMo (generated, reference and alternatives) are resampled to the lowest fps among them before extraction, so motion embeddings are compared over the same time span.
 
 > If `PYTHON_SAM3D` is not set, the script falls back to `python` and assumes a single environment that satisfies all dependencies.
 
@@ -152,6 +155,7 @@ PYTHON_SAM3D=/path/to/envs/cronos-sam3d/bin/python bash scripts/run_predictions.
 | `dino_embeddings.npz` | `run_dino.py` |
 | `dismo_embeddings.npz` | `run_dismo.py` (generated video) |
 | `gt_dismo_embeddings.npz` | `run_dismo.py` (reference video) |
+| `gt_dismo_embeddings/*.npz` | `run_dismo.py` (one per alternative, only with `--ref_alternatives`) |
 | `vlm_predictions.json` | `run_qwen.py` |
 
 Individual scripts can also be run standalone; each accepts `--help`.
@@ -173,7 +177,7 @@ python metrics/metrics.py \
 | Metric | Description | Pass threshold |
 |---|---|---|
 | `bg_mse` | Background MSE vs frame 0 — detects unwanted scene changes | ≤ 0.25 |
-| `motion_similarity` | DisMo cosine similarity between generated and reference motion | ≥ 0.70 |
+| `motion_similarity` | DisMo cosine similarity between generated and reference motion (best over alternatives if provided; the chosen one is stored as `motion_similarity_ref`) | ≥ 0.70 |
 | `object_consistency` | DINOv2 temporal consistency of tracked objects | ≥ 0.50 |
 | `mean_chamfer_distance` | SAM3D mesh Chamfer distance across frames — measures shape stability | ≤ 0.80 |
 | `vlm_positive_fraction` | Fraction of Qwen VLM task-specific questions answered positively | ≥ 0.35 |

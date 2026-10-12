@@ -53,14 +53,49 @@ def object_consistency(dino_path, masks_path=None):
     return robust_min(consistencies) if consistencies else float("nan")
 
 
-def dismo_similarity(dismo_path, gt_dismo_path):
-    """Robust-min per-frame cosine similarity between generated and GT DisMo embeddings."""
-    gen_emb = load_dismo_embeddings(dismo_path)
-    gt_emb  = load_dismo_embeddings(gt_dismo_path)
+def _align_fps(emb, fps, target_fps):
+    """Nearest-neighbour resampling of a (T, D) embedding sequence to target_fps."""
+    if fps is None or target_fps is None or abs(fps - target_fps) < 1e-3:
+        return emb
+    n   = int(np.floor(len(emb) * target_fps / fps + 1e-6))
+    idx = np.clip(np.round(np.arange(n) * fps / target_fps).astype(int), 0, len(emb) - 1)
+    return emb[idx]
+
+
+def _dismo_pair_similarity(gen_emb, gen_fps, gt_path):
+    gt_emb, gt_fps = load_dismo_embeddings(gt_path)
+    if gen_fps is not None and gt_fps is not None and abs(gen_fps - gt_fps) >= 1e-3:
+        # Fallback for embeddings extracted without --align_to: DisMo's lookahead
+        # window then spans different durations, so re-run run_dismo.py if possible.
+        print(f"Warning: DisMo fps mismatch ({gen_fps:.2f} vs {gt_fps:.2f}) for "
+              f"{os.path.basename(gt_path)}; resampling embeddings to the lower fps.")
+        target = min(gen_fps, gt_fps)
+        gen_emb, gt_emb = _align_fps(gen_emb, gen_fps, target), _align_fps(gt_emb, gt_fps, target)
     n = min(len(gen_emb), len(gt_emb))
     if n == 0:
         return float("nan")
     return robust_min(cosine_similarity(gen_emb[:n], gt_emb[:n]))
+
+
+def dismo_similarity(dismo_path, gt_dismo_path):
+    """Robust-min per-frame cosine similarity between generated and GT DisMo embeddings.
+
+    gt_dismo_path may be a single .npz or a directory of .npz files (one per
+    alternative reference); in the latter case the best-matching alternative
+    is selected.  Returns (similarity, name of the selected reference).
+    """
+    gen_emb, gen_fps = load_dismo_embeddings(dismo_path)
+    if os.path.isdir(gt_dismo_path):
+        candidates = sorted(Path(gt_dismo_path).glob("*.npz"))
+    else:
+        candidates = [Path(gt_dismo_path)]
+
+    best, best_name = float("nan"), None
+    for path in candidates:
+        sim = _dismo_pair_similarity(gen_emb, gen_fps, str(path))
+        if np.isfinite(sim) and (best_name is None or sim > best):
+            best, best_name = sim, path.stem
+    return best, best_name
 
 
 def chamfer_distance(output_dir, masks_path=None):
@@ -309,7 +344,9 @@ def compute_all(video_path, ref_dir, output_dir):
     """
     dino_path   = os.path.join(output_dir, "dino_embeddings.npz")
     dismo_path  = os.path.join(output_dir, "dismo_embeddings.npz")
-    gt_dismo    = os.path.join(output_dir, "gt_dismo_embeddings.npz")
+    gt_dismo    = os.path.join(output_dir, "gt_dismo_embeddings")        # dir of alternatives
+    if not os.path.isdir(gt_dismo):
+        gt_dismo = os.path.join(output_dir, "gt_dismo_embeddings.npz")
     masks_path  = os.path.join(output_dir, "segmentation_masks.npz")
     vlm_path    = os.path.join(output_dir, "vlm_predictions.json")
     tracks_path = os.path.join(output_dir, "tracks.npz")
@@ -317,9 +354,10 @@ def compute_all(video_path, ref_dir, output_dir):
     raw = {}
     raw["object_consistency"]    = (object_consistency(dino_path, masks_path)
                                     if os.path.isfile(dino_path) else float("nan"))
-    raw["motion_similarity"]     = (dismo_similarity(dismo_path, gt_dismo)
-                                    if os.path.isfile(dismo_path) and os.path.isfile(gt_dismo)
-                                    else float("nan"))
+    raw["motion_similarity"], raw["motion_similarity_ref"] = (
+        dismo_similarity(dismo_path, gt_dismo)
+        if os.path.isfile(dismo_path) and os.path.exists(gt_dismo)
+        else (float("nan"), None))
     raw["mean_chamfer_distance"] = chamfer_distance(output_dir, masks_path)
     raw["bg_mse"]                = (background_mse(video_path, masks_path)
                                     if os.path.isfile(masks_path) else float("nan"))
@@ -330,7 +368,7 @@ def compute_all(video_path, ref_dir, output_dir):
                                      else float("nan"))
     raw["success"]               = compute_success(raw)
 
-    _no_scale = {"success", "disappearance_fraction"}
+    _no_scale = {"success", "disappearance_fraction", "motion_similarity_ref"}
     scaled = {f"{k}_scaled": scale_metric(k, v)
               for k, v in raw.items() if k not in _no_scale}
     return {**raw, **scaled}
@@ -359,6 +397,8 @@ def main():
                  "disappearance_fraction"):
         val = metrics[name]
         print(f"  {name:<25} {val:.4f}" if np.isfinite(val) else f"  {name:<25} nan")
+    if metrics["motion_similarity_ref"] is not None:
+        print(f"  {'motion_similarity_ref':<25} {metrics['motion_similarity_ref']}")
     print(f"  {'success':<25} {metrics['success']}")
     print(f"Metrics saved → {out_path}")
 

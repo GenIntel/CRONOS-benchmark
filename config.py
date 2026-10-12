@@ -1,10 +1,14 @@
+import os
+
 # ── Model paths ───────────────────────────────────────────────────────────────
-SAM3_MODEL_PATH   = "/path/to/sam3"
-SAM3D_OBJECTS_DIR = "/path/to/sam-3d-objects"
-SAM3D_HF_REPO     = "facebook/sam-3d-objects"
-SAM3D_HF_CACHE    = "/path/to/hf-cache/sam-3d-objects"
-CLIP_MODEL_PATH   = "/path/to/CLIP"
-QWEN_MODEL_PATH   = "Qwen/Qwen3-VL-32B-Instruct"
+# Each path can be overridden from the environment (CRONOS_<NAME>), so a cluster
+# can point at its own checkouts/caches without editing this tracked file.
+SAM3_MODEL_PATH   = os.environ.get("CRONOS_SAM3_MODEL_PATH",   "/path/to/sam3")
+SAM3D_OBJECTS_DIR = os.environ.get("CRONOS_SAM3D_OBJECTS_DIR", "/path/to/sam-3d-objects")
+SAM3D_HF_REPO     = os.environ.get("CRONOS_SAM3D_HF_REPO",     "facebook/sam-3d-objects")
+SAM3D_HF_CACHE    = os.environ.get("CRONOS_SAM3D_HF_CACHE",    "/path/to/hf-cache/sam-3d-objects")
+CLIP_MODEL_PATH   = os.environ.get("CRONOS_CLIP_MODEL_PATH",   "/path/to/CLIP")
+QWEN_MODEL_PATH   = os.environ.get("CRONOS_QWEN_MODEL_PATH",   "Qwen/Qwen3-VL-32B-Instruct")
 
 # ── Hub identifiers (repo, model) ─────────────────────────────────────────────
 COTRACKER_HUB = ("facebookresearch/co-tracker", "cotracker3_offline")

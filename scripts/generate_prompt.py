@@ -3,7 +3,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import OBJECT_NAMES, OBJECT_MATERIALS, SURFACE_DICT, EXTRA_ELEMENTS
+from config import OBJECT_NAMES, OBJECT_APPEARANCES, SURFACE_DICT, EXTRA_ELEMENTS
 
 
 def get_exp_description(event, scene, object_name, material_desc, surface, view):
@@ -58,7 +58,7 @@ def get_prompt(event, scene, obj, appearance, view, generic_object=False):
     generic_object : if True, replace the specific object name with "object"
     """
     object_name   = "object" if generic_object else OBJECT_NAMES[obj]
-    material_desc = OBJECT_MATERIALS[obj][int(appearance[-1])]
+    material_desc = OBJECT_APPEARANCES[obj][int(appearance[-1])]
     surface       = SURFACE_DICT[event][scene]
 
     description = get_exp_description(event, scene, object_name, material_desc, surface, view)

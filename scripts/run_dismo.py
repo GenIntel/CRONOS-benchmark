@@ -53,7 +53,7 @@ def compute_predictions(model, video_frames, device, time_window=DISMO_TIME_WIND
 def save_predictions(embeddings, out_path, fps=None):
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
     extra = {"fps": np.float32(fps)} if fps is not None else {}
-    np.savez_compressed(out_path, embeddings=embeddings.numpy(), **extra)
+    np.savez_compressed(out_path, embeddings=embeddings.float().numpy(), **extra)
 
 
 def main():

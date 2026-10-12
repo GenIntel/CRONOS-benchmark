@@ -1,0 +1,5 @@
+# Pins the PyTorch stack installed first by setup_cronos.sh, so resolving
+# requirements-cronos.txt can never upgrade it.
+torch==2.5.1
+torchvision==0.20.1
+torchaudio==2.5.1

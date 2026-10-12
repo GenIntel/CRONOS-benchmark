@@ -71,10 +71,14 @@ def _load_mask(path):
     suffix = os.path.splitext(path)[1].lower()
     if suffix in (".jpg", ".jpeg", ".png"):
         img = iio.imread(path)
+        # Threshold at 127 like run_sam.py: JPEG noise makes an empty channel
+        # non-zero, and it must not become an object (object i must index the same
+        # object here and in segmentation_masks.npz).
         if img.ndim == 2:
-            return img[:, :, None] > 0
-        # Multi-channel: each channel is one object
-        return img > 0
+            return img[:, :, None] > 127
+        # Multi-channel: each non-empty channel is one object
+        mask = img > 127
+        return mask[..., mask.any(axis=(0, 1))]
     data = np.load(path)
     mask = data[data.files[0]] if hasattr(data, "files") else data
     if mask.ndim == 2:
